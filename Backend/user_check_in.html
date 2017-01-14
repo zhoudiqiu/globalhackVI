@@ -1,0 +1,121 @@
+<html>
+    <head>
+        <title>Check in</title>
+    </head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    
+    <body>
+        <div ng-app="user_checkin" ng-controller="checkInCtrl" ng-init="record_find=false" ng-init="show_custom=false">
+          <form name="form" class="css-form" novalidate>
+                <div>
+                Guest name:
+                <input type="text" ng-model="user.phone"
+                       name="uName" required/>
+                <br/>
+                <input type="button" ng-click="get_user_info()" value="Search"/>
+                </div>
+            
+            <div ng-show="record_find==true"> 
+                <br/>
+                Name:{{!kkk.FirstName+" "+kkk.LastName}}<br/>
+                Gender:{{!kkk.Gender==1? 'Male' : (kkk.Gender==0? 'Female': '')}}<br/>
+                Age:{{!kkk.Age}}<br/>
+                SSN:{{!kkk.SSN}}<br/>
+                Veteran:{{!kkk.Veteran==1? 'Yes' : (kkk.Veteran==0? 'No' : '')}}<br/>
+                Space request:{{!kkk.bedNumber}}</br></br>
+                
+                Available spaces:{{!num_available_space}}</br>
+                <input type="checkbox" ng-click="custom_switch()" />
+                Space need change
+                <div ng-show="show_custom">
+                  <input type="text" ng-model="user.bedNumber" name="uBedNumber"/>
+                </div>
+                <br/>
+
+                <input type="button" ng-click="check_in_confirm()" value="Check in"/>
+
+                <input type="button" ng-click="cancel()" value="Cancel"/>
+            </div>
+                        
+            </form>
+        </div>
+    </body>
+</html>
+
+
+<script>
+var app=angular.module('user_checkin', []);
+app.controller('checkInCtrl', function($http, $scope){
+    $scope.user={
+          "userid": "7096170593576ceacbfe8da8aec36f3d",
+          "bedNumber": "2"
+//        "Veteran": "1",
+//        "SSN": "12342342",
+//        "Phone": "+1314660281",
+//        "LastName": "Zhou",
+//        "FirstName": "Diqiu",
+//        "Age": "1",
+//        "Gender": "1"
+    };
+    
+    $scope.record_find=false;
+    $scope.show_custom=false;
+    $scope.num_available_space=0;
+    
+    $scope.custom_switch=function(){
+      $scope.show_custom=!$scope.show_custom;
+    }
+   
+    $scope.get_user_info = function() {
+        $scope.record_find=true;
+        $http.put('http://localhost:8000/data/get', $scope.user)
+          .then(
+            //search success
+            function(response){
+              // $scope.kkk = angular.fromJson(response.data.data);
+              $scope.kkk = angular.fromJson(response.data.data[0]);
+         
+              $scope.num_available_space=angular.fromJson(response.data.availableSpace);
+            },
+            //search fail
+            function(){
+              console.log("send failure");
+            }
+        );
+  }
+    $scope.user={
+      'userid': '7096170593576ceacbfe8da8aec36f3d'
+    };
+    $scope.user.customize = $scope.show_custom;
+    $scope.CurrentDate = new Date();
+    $scope.user.time = $scope.CurrentDate.getHours()+""+$scope.CurrentDate.getMinutes();
+    console.log($scope.user.userid);
+    console.log($scope.user.phone);
+    
+    $scope.user.bedNumber = "2";
+    $scope.check_in_confirm=function(){
+        console.log($scope.user);
+        $http.post('http://localhost:8000/center/checkin', $scope.user)
+          .then(
+            //search success
+            function(response){
+              console.log(response.data);
+              $scope.kkk = angular.fromJson(response.data.data);
+              // console.log($scope.kkk[0].SSN);
+            },
+            //search fail
+            function(){
+              console.log("send failure");
+            }
+        );
+        
+    }
+  
+  $scope.cancel=function(){
+      $scope.user={};
+      $scope.record_find=false;
+  }
+
+  
+});
+</script>

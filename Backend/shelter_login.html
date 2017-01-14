@@ -1,0 +1,27 @@
+<html>
+    <head>
+    </head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    
+    <body>
+        <div ng-app="shelter_login" ng-controller="shelterLoginCtrl">
+          <form name="form" class="css-form" novalidate>
+            Your Email address:
+            <input type="text" ng-model="user.email" phone name="uEmail" required placeholder="name@example.com"/>
+            <br/>
+
+            Password:
+            <input type="password" ng-model="user.password" name="uPassword" required/>
+            <br/>
+
+            <input type="button" ng-click="try_login(user)" value="Login" />
+            
+            <input type="button" onclick="location.href='http://google.com';" name="uSignUp" value="Sign up" />
+                        
+            </form>
+        </div>
+    </body>
+</html>
+
+
+<script src="{{ static_url("shelter_login.js")}}"></script>

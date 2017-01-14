@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyD0R_2zpFYQ4UZtUrbGWFOJ5TfZD_SupYo&extension=.js"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.2.0/ui-bootstrap-tpls.min.js"></script>-->
+
+  <style>
+    #map {
+    height:420px;
+    width:600px;
+}
+.infoWindowContent {
+    font-size:  14px !important;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+}
+h2 {
+    margin-bottom:0;
+    margin-top: 0;
+}
+    </style>
+  </head>
+  <body>
+  <div ng-app="mapsApp" ng-controller="MapCtrl">
+    <div id="map"></div>
+    Enter your address: <input type="text" ng-model="request.address" name="request_address"><br/>
+    Number of beds you need: <input type="text" ng-model="request.beds" name="request_beds"><br/>
+    <input type="submit" ng-click="getLocation()" value="Search">
+    <ul ng-repeat="shelter in shelters | orderBy:'distance'" ng-hide="detail_show">
+        <li>
+            <a href="" ng-click="openInfoWindow($event, $index)">
+                {{!shelter.ShelterName}}<br>
+            </a >
+
+        </li>
+    </ul>
+
+    <div ng-show="detail_show">
+        <button ng-click="detail_show=false">Back to results</button> <br>
+        Recommended Arriving Time: {{!detail.SuggestedTime}} <br>
+        Name: {{!detail.ShelterName}} <br>
+        Address: {{!detail.Address}} <br>
+        Hours: {{!detail.Hours}}<br>
+        Service: {{!detail.Service}}<br>
+        Capacity: {{!detail.Capacity}} <br>
+        Available Space: {{!detail.AvailableSpace}}<br>
+    </div>
+</div>
+
+<script>
+//Data
+
+
+//Angular App Module and Controller
+angular.module('mapsApp', [])
+.controller('MapCtrl', function ($scope,$http,$filter) {
+
+    var mapOptions = {
+        zoom: 15,
+        center: new google.maps.LatLng(38.638719, -90.204893),
+        mapTypeId: google.maps.MapTypeId.TERRAIN
+    }
+    $scope.shelters = [];
+
+
+
+    $scope.map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+    //auto adjust center and zoom
+    var Latlngbounds = new google.maps.LatLngBounds();
+    for (var i = 0; i < $scope.shelters.length; i++) {
+
+        Latlngbounds.extend(new google.maps.LatLng($scope.shelters[i]['Lat'], $scope.shelters[i]['Long']));
+    }
+
+    $scope.map.fitBounds(Latlngbounds);
+
+
+    $scope.markers = [];
+    $scope.currentMarker = [];
+
+    //detailed information for the selected location
+    $scope.detail = {};
+
+    $scope.detail_show = false;
+    
+    var infoWindow = new google.maps.InfoWindow();
+
+    var redImage = {
+             url: 'http://www.monks-security.co.uk/images/icon/Map_pin_icon.png', // image is 512 x 512
+             scaledSize : new google.maps.Size(22, 32),
+        };
+
+    var currentImage ={
+        url: 'http://icon-park.com/imagefiles/location_map_pin_turquoise_blue6.png',
+        scaledSize: new google.maps.Size(30, 40),
+    };
+    
+    var createMarker = function (info,i){
+        
+        var marker = new google.maps.Marker({
+            map: $scope.map,
+            position: new google.maps.LatLng(info.Lat, info.Long),
+            title: info.ShelterName,
+            address: info.Address,
+            icon: redImage,
+            animation: google.maps.Animation.DROP,
+            label: i+""
+
+        });
+        marker.content = '<div class="infoWindowContent">' + info.address + '</div>';
+        google.maps.event.addListener(marker, 'click', function(){
+            infoWindow.setContent('<h2>' + marker.title + '</h2>' + marker.address);
+            infoWindow.open($scope.map, marker);
+            $scope.detail = $scope.shelters[parseInt(marker.label)-1];
+          
+            $scope.detail_show = true;
+            $scope.$apply();
+
+        });
+        
+        $scope.markers.push(marker);
+        
+    }  
+    var createCurrentMarker = function (info){
+        
+        var marker = new google.maps.Marker({
+            map: $scope.map,
+            position: new google.maps.LatLng(info.lat, info.long),
+            title: "Your location",
+            animation: google.maps.Animation.DROP,
+            icon: currentImage,
+            label: i+""
+
+        });
+        marker.content = '<div class="infoWindowContent">' + info.Address + '</div>';
+       
+        google.maps.event.addListener(marker, 'click', function(){
+            infoWindow.setContent('<h2>' + marker.title + '</h2>' + marker.content);
+            infoWindow.open($scope.map, marker);
+            $scope.detail = info;
+          
+            $scope.detail_show = false;
+            $scope.$apply();
+
+        });
+        
+        $scope.currentMarker.push(marker);
+        
+    }  
+    
+
+    $scope.openInfoWindow = function(e, i){
+        var marker = $scope.markers[i];
+        e.preventDefault();
+        infoWindow.setContent('<h2>' + marker.title + '</h2>' + marker.content);
+        infoWindow.open($scope.map, marker);
+        $scope.detail = $scope.shelters[i];
+        $scope.detail_show = true;
+
+    }
+    //NEED REAL USER ID!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    $scope.request ={
+        'userid': '8e336728d4fa13339d66c87cd89b855e'
+    };
+
+    $scope.getLocation=function(){
+        console.log($scope.request.address);
+        var geocoder =  new google.maps.Geocoder();
+        geocoder.geocode( {'address': $scope.request.address}, function(results, status) {
+          if (status == google.maps.GeocoderStatus.OK) {
+            $scope.$apply(function(){
+                $scope.request.long=results[0].geometry.location.lng();
+                $scope.request.lat=results[0].geometry.location.lat();
+                initialLocation = new google.maps.LatLng($scope.request.lat, $scope.request.long);
+                $scope.map.setCenter(initialLocation);
+                createCurrentMarker($scope.request);
+               // createCurrentMarker();
+                return $http.post('http://localhost:8000/data/get', $scope.request).then(function(response){console.log(response.data);
+                    //SET PIN
+                    //SORT THE RESPONSE BY DISTANCE TO THE CURRENT LOCATION
+
+                        for(var i=0;i<response.data.data.length;i++){
+                            $scope.shelters[i] = response.data.data[i];
+                            createMarker($scope.shelters[i],i+1);
+                        };
+                        for(var i=0;i<$scope.shelters.length;i++){
+                            console.log("lat: "+$scope.shelters[i].lat+" lng:"+$scope.shelters[i].lng);
+                        }
+                        
+                        console.log("shelter updated");
+                    
+
+
+                    }, function(){console.log("send failure")});
+            });
+            
+          } else {
+            
+          }
+        });
+    };
+});
+
+
+
+
+</script>
+
+  </body>
+ </html>

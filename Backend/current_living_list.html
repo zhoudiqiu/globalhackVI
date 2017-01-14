@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>Current living management</title>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<style>
+button.accordion {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    transition: 0.4s;
+}
+
+button.accordion.active, button.accordion:hover {
+    background-color: #ddd;
+}
+
+button.accordion:after {
+    content: '\02795';
+    font-size: 13px;
+    color: #777;
+    float: right;
+    margin-left: 5px;
+}
+
+button.accordion.active:after {
+    content: "\2796";
+}
+
+div.panel {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: 0.6s ease-in-out;
+    opacity: 0;
+}
+
+div.panel.show {
+    opacity: 1;
+    max-height: 500px;
+}
+</style>
+</head>
+<body>
+
+<h2>Current living list</h2>
+<div ng-app="living_list" ng-controller="livingListCtrl" >
+    <div class="list-group-item" ng-repeat="user in user_list">
+        <button class="accordion">{{!user.FirstName+" "+user.LastName}}</button>
+        <div class="panel">
+            Name: {{!user.FirstName+" "+user.LastName}} <br/>
+            Gender:{{!user.Gender==1? 'Male' : (user.Gender==0? 'Female': '')}}<br/>
+            Age:{{!user.Age}}<br/>
+            SSN:{{!user.SSN}}<br/>
+            Phone:{{!user.Phone}}<br/>
+            Veteran:{{!user.Veteran==1? 'Yes' : (user.Veteran==0? 'No' : '')}}<br/>
+            Need Job:{{!user.NeedJob==1? 'Yes' : 'No'}}<br/>
+            Need Education:{{!user.NeedEducation==1? 'Yes':'No'}}<br/>
+            Need Medical Service:{{!user.MedicalService==1?'Yes':'No'}}<br/>
+            Suffer Domestic Violence:{{!user.DomesticViolence==1? 'Yes' : 'No'}}<br/>
+        </div>
+    </div>
+</div>
+
+
+    
+    
+    
+    
+<script>
+var acc = document.getElementsByClassName("accordion");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+    acc[i].onclick = function(){
+        this.classList.toggle("active");
+        this.nextElementSibling.classList.toggle("show");
+  }
+}
+
+var app=angular.module('living_list', []);
+app.controller('livingListCtrl', function($http, $scope){
+    $scope.userid={"userid":"7096170593576ceacbfe8da8aec36f3d"};
+    $scope.get_list=function(){
+        $http.post('http://localhost:8000/list/get', $scope.userid)
+          .then(
+            //search success
+            function(response){
+              console.log(angular.fromJson(response.data.data));
+              $scope.user_list =angular.fromJson(response.data.data);
+            },
+            //search fail
+            function(){
+              console.log("send failure");
+            }
+        );
+        
+    }
+$scope.get_list();
+    
+    
+    
+});
+</script>
+
+</body>
+</html>
+
